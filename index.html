@@ -6,6 +6,9 @@
     <title>ARSEU - Kulüp Yönetim Sistemi</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
     <!-- Login Ekranı -->
@@ -29,6 +32,13 @@
             <div class="logo">
                 <h1>ARSEU</h1>
                 <span>Kulüp Yönetim Sistemi</span>
+            </div>
+            <div class="online-users">
+                <div class="online-indicator">
+                    <span class="pulse"></span>
+                    <span class="online-count">0</span> kişi online
+                </div>
+                <div class="online-list" id="onlineList"></div>
             </div>
             <nav>
                 <button class="nav-btn active" data-section="shifts">Satış Nöbetleri</button>

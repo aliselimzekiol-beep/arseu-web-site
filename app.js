@@ -1,5 +1,85 @@
 // ARSEU Kulüp Yönetim Sistemi - JavaScript
 
+// ========== Firebase Yapılandırması ==========
+const firebaseConfig = {
+    apiKey: "AIzaSyDummyKeyForDemo123456789",
+    authDomain: "arseu-website.firebaseapp.com",
+    databaseURL: "https://arseu-website-default-rtdb.firebaseio.com",
+    projectId: "arseu-website",
+    storageBucket: "arseu-website.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abc123def456"
+};
+
+// Firebase başlat
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+// ========== Online Kullanıcılar Sistemi ==========
+const OnlineTracker = {
+    currentUser: null,
+    userRef: null,
+    heartbeatInterval: null,
+    
+    init(username) {
+        this.currentUser = username;
+        const userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        this.userRef = database.ref('onlineUsers/' + userId);
+        
+        // Kullanıcıyı online olarak işaretle
+        this.userRef.set({
+            username: username,
+            joinedAt: firebase.database.ServerValue.TIMESTAMP,
+            lastSeen: firebase.database.ServerValue.TIMESTAMP
+        });
+        
+        // Sayfa kapatıldığında offline yap
+        this.userRef.onDisconnect().remove();
+        
+        // Her 10 saniyede bir heartbeat gönder
+        this.heartbeatInterval = setInterval(() => {
+            this.userRef.update({
+                lastSeen: firebase.database.ServerValue.TIMESTAMP
+            });
+        }, 10000);
+        
+        // Online kullanıcıları dinle
+        this.listenToOnlineUsers();
+    },
+    
+    listenToOnlineUsers() {
+        const onlineRef = database.ref('onlineUsers');
+        onlineRef.on('value', (snapshot) => {
+            const users = snapshot.val();
+            this.updateOnlineDisplay(users);
+        });
+    },
+    
+    updateOnlineDisplay(users) {
+        const count = users ? Object.keys(users).length : 0;
+        document.querySelector('.online-count').textContent = count;
+        
+        const listContainer = document.getElementById('onlineList');
+        if (users) {
+            const userList = Object.values(users);
+            listContainer.innerHTML = userList.map(u => 
+                `<div class="online-user">${u.username}</div>`
+            ).join('');
+        } else {
+            listContainer.innerHTML = '<div class="online-user">Kimse online değil</div>';
+        }
+    },
+    
+    disconnect() {
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+        }
+        if (this.userRef) {
+            this.userRef.remove();
+        }
+    }
+};
+
 // ========== Giriş Sistemi ==========
 const Auth = {
     users: JSON.parse(localStorage.getItem('arseu_users')) || [
@@ -21,6 +101,7 @@ const Auth = {
     },
     
     logout() {
+        OnlineTracker.disconnect();
         sessionStorage.removeItem('arseu_logged_in');
         sessionStorage.removeItem('arseu_user');
         window.location.reload();
@@ -45,6 +126,7 @@ function handleLogin(e) {
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('mainContainer').style.display = 'flex';
         initApp();
+        OnlineTracker.init(username);
         showToast('Hoş geldiniz, ' + username + '!');
     } else {
         showToast('Kullanıcı adı veya şifre hatalı!', 'error');
@@ -365,10 +447,23 @@ function initApp() {
     renderWorkSchedule();
     renderNews();
     renderProjects();
+    
+    // Eğer kullanıcı zaten giriş yapmışsa, online tracker'ı başlat
+    const currentUser = sessionStorage.getItem('arseu_user');
+    if (currentUser) {
+        OnlineTracker.init(currentUser);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     if (Auth.isLoggedIn()) {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('mainContainer').style.display = 'flex';
         initApp();
     }
+});
+
+// Sayfa kapatıldığında online durumunu temizle
+window.addEventListener('beforeunload', () => {
+    OnlineTracker.disconnect();
 });
