@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARSEU - Kulüp Yönetim Sistemi</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Login Ekranı -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-box">
+            <div class="login-logo">
+                <h1>ARSEU</h1>
+                <span>Kulüp Girişi</span>
+            </div>
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <input type="text" id="username" placeholder="Kullanıcı Adı" required>
+                <input type="password" id="password" placeholder="Şifre" required>
+                <button type="submit">Giriş Yap</button>
+            </form>
+            <p class="login-info">Varsayılan: kullanıcı adı: <strong>arseu</strong> | şifre: <strong>1234</strong></p>
+        </div>
+    </div>
+
+    <div class="container" id="mainContainer" style="display: none;">
+        <header>
+            <div class="logo">
+                <h1>ARSEU</h1>
+                <span>Kulüp Yönetim Sistemi</span>
+            </div>
+            <nav>
+                <button class="nav-btn active" data-section="shifts">Satış Nöbetleri</button>
+                <button class="nav-btn" data-section="work">Cuma Altı</button>
+                <button class="nav-btn" data-section="news">Haberler</button>
+                <button class="nav-btn" data-section="projects">AI Projeleri</button>
+                <button class="nav-btn logout-btn" onclick="Auth.logout()">Çıkış Yap</button>
+            </nav>
+        </header>
+
+        <main>
+            <!-- Satış Nöbetleri Bölümü -->
+            <section id="shifts" class="section active">
+                <h2>Haftalık Satış Nöbetleri</h2>
+                <p class="description">Her teneffüste 1 kişi görev alır. Toplam 7 teneffüs.</p>
+                
+                <div class="week-selector">
+                    <button id="prevWeek">&lt; Önceki Hafta</button>
+                    <span id="currentWeek">Bu Hafta</span>
+                    <button id="nextWeek">Sonraki Hafta &gt;</button>
+                </div>
+
+                <div class="shifts-grid" id="shiftsGrid">
+                    <!-- JavaScript ile doldurulacak -->
+                </div>
+
+                <div class="add-shift-form">
+                    <h3>Nöbet Ekle/Düzenle</h3>
+                    <select id="shiftDay">
+                        <option value="Pazartesi">Pazartesi</option>
+                        <option value="Salı">Salı</option>
+                        <option value="Çarşamba">Çarşamba</option>
+                        <option value="Perşembe">Perşembe</option>
+                        <option value="Cuma">Cuma</option>
+                    </select>
+                    <select id="shiftNumber">
+                        <option value="1">1. Teneffüs</option>
+                        <option value="2">2. Teneffüs</option>
+                        <option value="3">3. Teneffüs</option>
+                        <option value="4">4. Teneffüs</option>
+                        <option value="5">5. Teneffüs</option>
+                        <option value="6">6. Teneffüs</option>
+                        <option value="7">7. Teneffüs</option>
+                    </select>
+                    <input type="text" id="shiftPerson" placeholder="İsim Soyisim" required>
+                    <button onclick="addShift()">Nöbet Ekle</button>
+                </div>
+            </section>
+
+            <!-- Cuma Altı Çalışma Bölümü -->
+            <section id="work" class="section">
+                <h2>Cuma Altı Çalışma Programı</h2>
+                <p class="description">Kendi çalışma teneffüsünüzü seçin.</p>
+                
+                <div class="work-schedule" id="workSchedule">
+                    <!-- JavaScript ile doldurulacak -->
+                </div>
+
+                <div class="select-work-form">
+                    <h3>Çalışma Teneffüsü Seç</h3>
+                    <input type="text" id="workName" placeholder="Adınız Soyadınız" required>
+                    <select id="workShift">
+                        <option value="1">1. Teneffüs (08:40-09:00)</option>
+                        <option value="2">2. Teneffüs (10:00-10:20)</option>
+                        <option value="3">3. Teneffüs (11:20-11:40)</option>
+                        <option value="4">4. Teneffüs (12:40-13:00)</option>
+                        <option value="5">5. Teneffüs (14:00-14:20)</option>
+                        <option value="6">6. Teneffüs (15:20-15:40)</option>
+                        <option value="7">7. Teneffüs (16:40-17:00)</option>
+                    </select>
+                    <button onclick="selectWorkShift()">Teneffüs Seç</button>
+                </div>
+            </section>
+
+            <!-- Haberler Bölümü -->
+            <section id="news" class="section">
+                <h2>Haberler & Duyurular</h2>
+                
+                <div class="news-form">
+                    <h3>Yeni Haber Ekle</h3>
+                    <input type="text" id="newsTitle" placeholder="Haber Başlığı" required>
+                    <textarea id="newsContent" placeholder="Haber içeriği..." rows="4" required></textarea>
+                    <input type="text" id="newsAuthor" placeholder="Yazar" required>
+                    <button onclick="addNews()">Haber Yayınla</button>
+                </div>
+
+                <div class="news-list" id="newsList">
+                    <!-- JavaScript ile doldurulacak -->
+                </div>
+            </section>
+
+            <!-- AI Projeleri Bölümü -->
+            <section id="projects" class="section">
+                <h2>AI Projeleri</h2>
+                <p class="description">Yapay zeka ile geliştirilen projeleri keşfedin ve sunun.</p>
+                
+                <div class="project-form">
+                    <h3>Yeni Proje Sun</h3>
+                    <input type="text" id="projectTitle" placeholder="Proje Adı" required>
+                    <textarea id="projectDesc" placeholder="Proje açıklaması..." rows="3" required></textarea>
+                    <input type="text" id="projectTech" placeholder="Kullanılan AI Teknolojileri (örn: ChatGPT, Midjourney)">
+                    <input type="text" id="projectAuthor" placeholder="Sunan Kişi" required>
+                    <input type="url" id="projectLink" placeholder="Proje Linki (varsa)">
+                    <button onclick="addProject()">Projeyi Sun</button>
+                </div>
+
+                <div class="projects-grid" id="projectsGrid">
+                    <!-- JavaScript ile doldurulacak -->
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 ARSEU Kulüp Yönetim Sistemi</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
