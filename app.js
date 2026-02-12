@@ -142,22 +142,59 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// ========== Veri Yönetimi ==========
+// ========== Firebase Veri Yönetimi ==========
 const DataStore = {
-    shifts: JSON.parse(localStorage.getItem('arseu_shifts')) || {},
-    workSchedule: JSON.parse(localStorage.getItem('arseu_work')) || {},
-    news: JSON.parse(localStorage.getItem('arseu_news')) || [],
-    projects: JSON.parse(localStorage.getItem('arseu_projects')) || [],
-    ads: JSON.parse(localStorage.getItem('arseu_ads')) || [],
-    currentWeek: parseInt(localStorage.getItem('arseu_week')) || 0,
+    shifts: {},
+    workSchedule: {},
+    news: [],
+    projects: [],
+    ads: [],
+    currentWeek: 0,
 
-    save() {
-        localStorage.setItem('arseu_shifts', JSON.stringify(this.shifts));
-        localStorage.setItem('arseu_work', JSON.stringify(this.workSchedule));
-        localStorage.setItem('arseu_news', JSON.stringify(this.news));
-        localStorage.setItem('arseu_projects', JSON.stringify(this.projects));
-        localStorage.setItem('arseu_ads', JSON.stringify(this.ads));
-        localStorage.setItem('arseu_week', this.currentWeek.toString());
+    // Firebase referansları
+    refs: {
+        shifts: database.ref('shifts'),
+        workSchedule: database.ref('workSchedule'),
+        news: database.ref('news'),
+        projects: database.ref('projects'),
+        ads: database.ref('ads')
+    },
+
+    // Verileri dinlemeye başla
+    init() {
+        // Nöbetleri dinle
+        this.refs.shifts.on('value', (snapshot) => {
+            this.shifts = snapshot.val() || {};
+            renderShifts();
+            updateShiftSelectOptions();
+        });
+
+        // Çalışma programını dinle
+        this.refs.workSchedule.on('value', (snapshot) => {
+            this.workSchedule = snapshot.val() || {};
+            renderWorkSchedule();
+        });
+
+        // Haberleri dinle
+        this.refs.news.on('value', (snapshot) => {
+            const newsData = snapshot.val();
+            this.news = newsData ? Object.values(newsData) : [];
+            renderNews();
+        });
+
+        // Projeleri dinle
+        this.refs.projects.on('value', (snapshot) => {
+            const projectsData = snapshot.val();
+            this.projects = projectsData ? Object.values(projectsData) : [];
+            renderProjects();
+        });
+
+        // Reklamları dinle
+        this.refs.ads.on('value', (snapshot) => {
+            const adsData = snapshot.val();
+            this.ads = adsData ? Object.values(adsData) : [];
+            renderAds();
+        });
     },
 
     getShiftsForWeek(weekOffset) {
@@ -233,62 +270,54 @@ function addShift() {
     const day = document.getElementById('shiftDay').value;
     const shiftNum = document.getElementById('shiftNumber').value;
     const person = document.getElementById('shiftPerson').value.trim();
-    
+
     if (!person) {
         showToast('Lütfen bir isim girin!', 'error');
         return;
     }
-    
+
     const weekKey = DataStore.getWeekKey(DataStore.currentWeek);
-    
-    // Kontrol: Bu teneffüs dolu mu?
-    if (DataStore.shifts[weekKey] && 
-        DataStore.shifts[weekKey][day] && 
-        DataStore.shifts[weekKey][day][shiftNum]) {
-        const currentPerson = DataStore.shifts[weekKey][day][shiftNum];
-        showToast(`Bu teneffüs zaten ${currentPerson} tarafından alınmış!`, 'error');
-        return;
-    }
-    
-    if (!DataStore.shifts[weekKey]) DataStore.shifts[weekKey] = {};
-    if (!DataStore.shifts[weekKey][day]) DataStore.shifts[weekKey][day] = {};
-    
-    DataStore.shifts[weekKey][day][shiftNum] = person;
-    DataStore.save();
-    
-    document.getElementById('shiftPerson').value = '';
-    updateShiftSelectOptions(); // Form'daki seçenekleri güncelle
-    renderShifts();
-    showToast('Nöbet başarıyla eklendi!');
+
+    // Firebase'e kaydet
+    const shiftRef = database.ref(`shifts/${weekKey}/${day}/${shiftNum}`);
+    shiftRef.set(person)
+        .then(() => {
+            document.getElementById('shiftPerson').value = '';
+            showToast('Nöbet başarıyla eklendi!');
+        })
+        .catch((error) => {
+            showToast('Hata: ' + error.message, 'error');
+        });
 }
 
 // Form'daki teneffüs seçeneklerini güncelle (dolanları disabled yap)
 function updateShiftSelectOptions() {
-    const day = document.getElementById('shiftDay').value;
+    const daySelect = document.getElementById('shiftDay');
     const shiftSelect = document.getElementById('shiftNumber');
+
+    if (!daySelect || !shiftSelect) return;
+
+    const day = daySelect.value;
     const weekKey = DataStore.getWeekKey(DataStore.currentWeek);
     const currentShifts = DataStore.shifts[weekKey]?.[day] || {};
-    
+
     Array.from(shiftSelect.options).forEach(option => {
         const shiftNum = option.value;
         if (currentShifts[shiftNum]) {
             option.disabled = true;
-            option.text = `${shiftNum}. Teneffüs - ${currentShifts[shiftNum]} (DOLU)`;
+            option.textContent = `${shiftNum}. Teneffüs - ${currentShifts[shiftNum]} (DOLU)`;
         } else {
             option.disabled = false;
-            option.text = `${shiftNum}. Teneffüs`;
+            option.textContent = `${shiftNum}. Teneffüs`;
         }
     });
 }
 
 function deleteShift(day, shiftNum) {
     const weekKey = DataStore.getWeekKey(DataStore.currentWeek);
-    if (DataStore.shifts[weekKey] && DataStore.shifts[weekKey][day]) {
-        delete DataStore.shifts[weekKey][day][shiftNum];
-        DataStore.save();
-        renderShifts();
-        showToast('Nöbet silindi!');
-    }
+    database.ref(`shifts/${weekKey}/${day}/${shiftNum}`).remove()
+        .then(() => showToast('Nöbet silindi!'))
+        .catch((error) => showToast('Hata: ' + error.message, 'error'));
 }
 
 document.getElementById('prevWeek')?.addEventListener('click', () => {
@@ -339,32 +368,35 @@ function renderWorkSchedule() {
 function selectWorkShift() {
     const name = document.getElementById('workName').value.trim();
     const shiftNum = document.getElementById('workShift').value;
-    
+
     if (!name) {
         showToast('Lütfen adınızı girin!', 'error');
         return;
     }
-    
+
     // Eğer bu teneffüs doluysa uyarı ver
     if (DataStore.workSchedule[shiftNum]) {
         showToast('Bu teneffüs zaten dolu!', 'error');
         return;
     }
-    
+
+    const updates = {};
+
     // Kullanıcının başka bir teneffüsü var mı kontrol et
     const existingShift = Object.entries(DataStore.workSchedule).find(([_, worker]) => worker === name);
     if (existingShift) {
         const [oldShift] = existingShift;
-        delete DataStore.workSchedule[oldShift];
-        showToast(`Önceki seçiminiz (${shiftTimes[oldShift]}) iptal edildi.`);
+        updates[`workSchedule/${oldShift}`] = null;
     }
-    
-    DataStore.workSchedule[shiftNum] = name;
-    DataStore.save();
-    
-    document.getElementById('workName').value = '';
-    renderWorkSchedule();
-    showToast('Çalışma teneffüsünüz seçildi!');
+
+    updates[`workSchedule/${shiftNum}`] = name;
+
+    database.ref().update(updates)
+        .then(() => {
+            document.getElementById('workName').value = '';
+            showToast('Çalışma teneffüsünüz seçildi!');
+        })
+        .catch((error) => showToast('Hata: ' + error.message, 'error'));
 }
 
 // ========== Haberler ==========
@@ -394,26 +426,26 @@ function addNews() {
     const title = document.getElementById('newsTitle').value.trim();
     const content = document.getElementById('newsContent').value.trim();
     const author = document.getElementById('newsAuthor').value.trim();
-    
+
     if (!title || !content || !author) {
         showToast('Lütfen tüm alanları doldurun!', 'error');
         return;
     }
-    
-    DataStore.news.push({
+
+    const newsRef = database.ref('news').push();
+    newsRef.set({
         title,
         content,
         author,
         date: new Date().toISOString()
-    });
-    DataStore.save();
-    
-    document.getElementById('newsTitle').value = '';
-    document.getElementById('newsContent').value = '';
-    document.getElementById('newsAuthor').value = '';
-    
-    renderNews();
-    showToast('Haber başarıyla yayınlandı!');
+    })
+    .then(() => {
+        document.getElementById('newsTitle').value = '';
+        document.getElementById('newsContent').value = '';
+        document.getElementById('newsAuthor').value = '';
+        showToast('Haber başarıyla yayınlandı!');
+    })
+    .catch((error) => showToast('Hata: ' + error.message, 'error'));
 }
 
 // ========== AI Projeleri ==========
@@ -458,24 +490,24 @@ function addProject() {
         return;
     }
     
-    DataStore.projects.push({
+    const projectRef = database.ref('projects').push();
+    projectRef.set({
         title,
         description,
         technologies,
         author,
         link,
         date: new Date().toISOString()
-    });
-    DataStore.save();
-    
-    document.getElementById('projectTitle').value = '';
-    document.getElementById('projectDesc').value = '';
-    document.getElementById('projectTech').value = '';
-    document.getElementById('projectAuthor').value = '';
-    document.getElementById('projectLink').value = '';
-    
-    renderProjects();
-    showToast('Proje başarıyla sunuldu!');
+    })
+    .then(() => {
+        document.getElementById('projectTitle').value = '';
+        document.getElementById('projectDesc').value = '';
+        document.getElementById('projectTech').value = '';
+        document.getElementById('projectAuthor').value = '';
+        document.getElementById('projectLink').value = '';
+        showToast('Proje başarıyla sunuldu!');
+    })
+    .catch((error) => showToast('Hata: ' + error.message, 'error'));
 }
 
 // ========== Reklamlar ==========
@@ -544,8 +576,9 @@ function addAd() {
         return;
     }
     
-    const newAd = {
-        id: 'ad_' + Date.now(),
+    const adRef = database.ref('ads').push();
+    adRef.set({
+        id: adRef.key,
         title,
         content,
         company,
@@ -554,40 +587,32 @@ function addAd() {
         expiry,
         type,
         date: new Date().toISOString()
-    };
-    
-    DataStore.ads.push(newAd);
-    DataStore.save();
-    
-    // Form temizle
-    document.getElementById('adTitle').value = '';
-    document.getElementById('adContent').value = '';
-    document.getElementById('adCompany').value = '';
-    document.getElementById('adImage').value = '';
-    document.getElementById('adLink').value = '';
-    document.getElementById('adExpiry').value = '';
-    document.getElementById('adType').value = 'sponsor';
-    
-    renderAds();
-    showToast('Reklam başarıyla eklendi!');
+    })
+    .then(() => {
+        document.getElementById('adTitle').value = '';
+        document.getElementById('adContent').value = '';
+        document.getElementById('adCompany').value = '';
+        document.getElementById('adImage').value = '';
+        document.getElementById('adLink').value = '';
+        document.getElementById('adExpiry').value = '';
+        document.getElementById('adType').value = 'sponsor';
+        showToast('Reklam başarıyla eklendi!');
+    })
+    .catch((error) => showToast('Hata: ' + error.message, 'error'));
 }
 
 function deleteAd(adId) {
     if (!confirm('Bu reklamı silmek istediğinize emin misiniz?')) return;
-    
-    DataStore.ads = DataStore.ads.filter(ad => ad.id !== adId);
-    DataStore.save();
-    renderAds();
-    showToast('Reklam silindi!');
+
+    database.ref(`ads/${adId}`).remove()
+        .then(() => showToast('Reklam silindi!'))
+        .catch((error) => showToast('Hata: ' + error.message, 'error'));
 }
 
 // ========== Başlatma ==========
 function initApp() {
-    renderShifts();
-    renderWorkSchedule();
-    renderNews();
-    renderProjects();
-    renderAds();
+    // Firebase veri dinleyicilerini başlat
+    DataStore.init();
     updateShiftSelectOptions(); // Form'daki teneffüs seçeneklerini güncelle
 
     // Eğer kullanıcı zaten giriş yapmışsa, online tracker'ı başlat
