@@ -148,6 +148,7 @@ const DataStore = {
     workSchedule: JSON.parse(localStorage.getItem('arseu_work')) || {},
     news: JSON.parse(localStorage.getItem('arseu_news')) || [],
     projects: JSON.parse(localStorage.getItem('arseu_projects')) || [],
+    ads: JSON.parse(localStorage.getItem('arseu_ads')) || [],
     currentWeek: parseInt(localStorage.getItem('arseu_week')) || 0,
 
     save() {
@@ -155,6 +156,7 @@ const DataStore = {
         localStorage.setItem('arseu_work', JSON.stringify(this.workSchedule));
         localStorage.setItem('arseu_news', JSON.stringify(this.news));
         localStorage.setItem('arseu_projects', JSON.stringify(this.projects));
+        localStorage.setItem('arseu_ads', JSON.stringify(this.ads));
         localStorage.setItem('arseu_week', this.currentWeek.toString());
     },
 
@@ -238,6 +240,16 @@ function addShift() {
     }
     
     const weekKey = DataStore.getWeekKey(DataStore.currentWeek);
+    
+    // Kontrol: Bu teneffüs dolu mu?
+    if (DataStore.shifts[weekKey] && 
+        DataStore.shifts[weekKey][day] && 
+        DataStore.shifts[weekKey][day][shiftNum]) {
+        const currentPerson = DataStore.shifts[weekKey][day][shiftNum];
+        showToast(`Bu teneffüs zaten ${currentPerson} tarafından alınmış!`, 'error');
+        return;
+    }
+    
     if (!DataStore.shifts[weekKey]) DataStore.shifts[weekKey] = {};
     if (!DataStore.shifts[weekKey][day]) DataStore.shifts[weekKey][day] = {};
     
@@ -245,8 +257,28 @@ function addShift() {
     DataStore.save();
     
     document.getElementById('shiftPerson').value = '';
+    updateShiftSelectOptions(); // Form'daki seçenekleri güncelle
     renderShifts();
     showToast('Nöbet başarıyla eklendi!');
+}
+
+// Form'daki teneffüs seçeneklerini güncelle (dolanları disabled yap)
+function updateShiftSelectOptions() {
+    const day = document.getElementById('shiftDay').value;
+    const shiftSelect = document.getElementById('shiftNumber');
+    const weekKey = DataStore.getWeekKey(DataStore.currentWeek);
+    const currentShifts = DataStore.shifts[weekKey]?.[day] || {};
+    
+    Array.from(shiftSelect.options).forEach(option => {
+        const shiftNum = option.value;
+        if (currentShifts[shiftNum]) {
+            option.disabled = true;
+            option.text = `${shiftNum}. Teneffüs - ${currentShifts[shiftNum]} (DOLU)`;
+        } else {
+            option.disabled = false;
+            option.text = `${shiftNum}. Teneffüs`;
+        }
+    });
 }
 
 function deleteShift(day, shiftNum) {
@@ -262,12 +294,17 @@ function deleteShift(day, shiftNum) {
 document.getElementById('prevWeek')?.addEventListener('click', () => {
     DataStore.currentWeek = Math.max(-4, DataStore.currentWeek - 1);
     renderShifts();
+    updateShiftSelectOptions();
 });
 
 document.getElementById('nextWeek')?.addEventListener('click', () => {
     DataStore.currentWeek = Math.min(4, DataStore.currentWeek + 1);
     renderShifts();
+    updateShiftSelectOptions();
 });
+
+// Gün değiştiğinde teneffüs seçeneklerini güncelle
+document.getElementById('shiftDay')?.addEventListener('change', updateShiftSelectOptions);
 
 // ========== Cuma Altı Çalışma ==========
 const shiftTimes = {
@@ -441,13 +478,118 @@ function addProject() {
     showToast('Proje başarıyla sunuldu!');
 }
 
+// ========== Reklamlar ==========
+function renderAds() {
+    const container = document.getElementById('adsGrid');
+    const now = new Date();
+    
+    // Süresi geçmemiş reklamları filtrele
+    const activeAds = DataStore.ads.filter(ad => {
+        if (!ad.expiry) return true;
+        return new Date(ad.expiry) >= now;
+    });
+    
+    if (activeAds.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #888; padding: 40px;">Henüz aktif reklam bulunmuyor.</p>';
+        return;
+    }
+    
+    const typeColors = {
+        sponsor: '#667eea',
+        ilan: '#51cf66',
+        duyuru: '#ffd93d',
+        etkinlik: '#ff6b6b'
+    };
+    
+    const typeLabels = {
+        sponsor: 'Sponsor',
+        ilan: 'İlan',
+        duyuru: 'Duyuru',
+        etkinlik: 'Etkinlik'
+    };
+    
+    container.innerHTML = activeAds
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .map(ad => `
+            <div class="ad-card">
+                <div class="ad-type-badge" style="background: ${typeColors[ad.type] || '#667eea'}">
+                    ${typeLabels[ad.type] || ad.type}
+                </div>
+                ${ad.image ? `<img src="${ad.image}" alt="${ad.title}" class="ad-image" onerror="this.style.display='none'">` : ''}
+                <div class="ad-content">
+                    <h4>${ad.title}</h4>
+                    <p>${ad.content}</p>
+                    <div class="ad-meta">
+                        <span class="ad-company">${ad.company}</span>
+                        ${ad.expiry ? `<span class="ad-expiry">Bitiş: ${new Date(ad.expiry).toLocaleDateString('tr-TR')}</span>` : ''}
+                    </div>
+                    ${ad.link ? `<a href="${ad.link}" target="_blank" class="ad-link">Detaylar &rarr;</a>` : ''}
+                </div>
+                <button class="ad-delete-btn" onclick="deleteAd('${ad.id}')">×</button>
+            </div>
+        `).join('');
+}
+
+function addAd() {
+    const title = document.getElementById('adTitle').value.trim();
+    const content = document.getElementById('adContent').value.trim();
+    const company = document.getElementById('adCompany').value.trim();
+    const image = document.getElementById('adImage').value.trim();
+    const link = document.getElementById('adLink').value.trim();
+    const expiry = document.getElementById('adExpiry').value;
+    const type = document.getElementById('adType').value;
+    
+    if (!title || !content || !company) {
+        showToast('Lütfen gerekli alanları doldurun!', 'error');
+        return;
+    }
+    
+    const newAd = {
+        id: 'ad_' + Date.now(),
+        title,
+        content,
+        company,
+        image,
+        link,
+        expiry,
+        type,
+        date: new Date().toISOString()
+    };
+    
+    DataStore.ads.push(newAd);
+    DataStore.save();
+    
+    // Form temizle
+    document.getElementById('adTitle').value = '';
+    document.getElementById('adContent').value = '';
+    document.getElementById('adCompany').value = '';
+    document.getElementById('adImage').value = '';
+    document.getElementById('adLink').value = '';
+    document.getElementById('adExpiry').value = '';
+    document.getElementById('adType').value = 'sponsor';
+    
+    renderAds();
+    showToast('Reklam başarıyla eklendi!');
+}
+
+function deleteAd(adId) {
+    if (!confirm('Bu reklamı silmek istediğinize emin misiniz?')) return;
+    
+    DataStore.ads = DataStore.ads.filter(ad => ad.id !== adId);
+    DataStore.save();
+    renderAds();
+    showToast('Reklam silindi!');
+}
+
 // ========== Başlatma ==========
 function initApp() {
     renderShifts();
     renderWorkSchedule();
     renderNews();
     renderProjects();
-    
+    renderAds();
+    updateShiftSelectOptions(); // Form'daki teneffüs seçeneklerini güncelle
+
     // Eğer kullanıcı zaten giriş yapmışsa, online tracker'ı başlat
     const currentUser = sessionStorage.getItem('arseu_user');
     if (currentUser) {

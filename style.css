@@ -757,3 +757,173 @@ footer {
         opacity: 1;
     }
 }
+
+/* Ads Section */
+.ads-form {
+    background: #f8f9fa;
+    padding: 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+}
+
+.ads-form h3 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.ads-form input,
+.ads-form textarea,
+.ads-form select {
+    width: 100%;
+    padding: 12px 15px;
+    margin: 10px 0;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+    font-family: inherit;
+}
+
+.ads-form input:focus,
+.ads-form textarea:focus,
+.ads-form select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.ads-form button {
+    width: 100%;
+    padding: 14px;
+    margin-top: 15px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.ads-form button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+}
+
+.ads-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    margin-top: 30px;
+}
+
+.ad-card {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease;
+    position: relative;
+    border-top: 5px solid #667eea;
+}
+
+.ad-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+
+.ad-type-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    z-index: 10;
+}
+
+.ad-image {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+}
+
+.ad-content {
+    padding: 25px;
+}
+
+.ad-content h4 {
+    color: #333;
+    font-size: 1.3rem;
+    margin-bottom: 12px;
+    padding-right: 60px;
+}
+
+.ad-content p {
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.ad-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.ad-company {
+    font-weight: 600;
+    color: #667eea;
+}
+
+.ad-expiry {
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.ad-link {
+    display: inline-block;
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.ad-link:hover {
+    color: #764ba2;
+    text-decoration: underline;
+}
+
+.ad-delete-btn {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #ff4757;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 20;
+}
+
+.ad-card:hover .ad-delete-btn {
+    opacity: 1;
+}
+
+.ad-delete-btn:hover {
+    background: #ff3344;
+    transform: scale(1.1);
+}

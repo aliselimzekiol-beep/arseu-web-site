@@ -43,6 +43,7 @@
             <nav>
                 <button class="nav-btn active" data-section="shifts">Satış Nöbetleri</button>
                 <button class="nav-btn" data-section="work">Cuma Altı</button>
+                <button class="nav-btn" data-section="ads">Reklamlar</button>
                 <button class="nav-btn" data-section="news">Haberler</button>
                 <button class="nav-btn" data-section="projects">AI Projeleri</button>
                 <button class="nav-btn logout-btn" onclick="Auth.logout()">Çıkış Yap</button>
@@ -146,6 +147,33 @@
                 </div>
 
                 <div class="projects-grid" id="projectsGrid">
+                    <!-- JavaScript ile doldurulacak -->
+                </div>
+            </section>
+
+            <!-- Reklamlar Bölümü -->
+            <section id="ads" class="section">
+                <h2>Reklam Panosu</h2>
+                <p class="description">Kulübümüzün sponsorları ve ilanları.</p>
+                
+                <div class="ads-form">
+                    <h3>Yeni Reklam Ekle</h3>
+                    <input type="text" id="adTitle" placeholder="Reklam Başlığı" required>
+                    <textarea id="adContent" placeholder="Reklam içeriği/açıklaması..." rows="3" required></textarea>
+                    <input type="text" id="adCompany" placeholder="Şirket/İlan Sahibi" required>
+                    <input type="url" id="adImage" placeholder="Görsel Linki (opsiyonel)">
+                    <input type="url" id="adLink" placeholder="Website/Link (opsiyonel)">
+                    <input type="date" id="adExpiry" placeholder="Bitiş Tarihi (opsiyonel)">
+                    <select id="adType">
+                        <option value="sponsor">Sponsor</option>
+                        <option value="ilan">İlan</option>
+                        <option value="duyuru">Duyuru</option>
+                        <option value="etkinlik">Etkinlik</option>
+                    </select>
+                    <button onclick="addAd()">Reklam Yayınla</button>
+                </div>
+
+                <div class="ads-grid" id="adsGrid">
                     <!-- JavaScript ile doldurulacak -->
                 </div>
             </section>
