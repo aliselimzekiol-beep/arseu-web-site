@@ -18,20 +18,20 @@
             
             <!-- Giriş Formu -->
             <div id="loginFormContainer">
-                <form id="loginForm" onsubmit="handleLogin(event)">
+                <form id="loginForm">
                     <input type="text" id="username" placeholder="Kullanıcı Adı" required>
                     <input type="password" id="password" placeholder="Şifre" required>
                     <button type="submit">Giriş Yap</button>
                 </form>
                 <p class="login-info">
                     Hesabınız yok mu? 
-                    <a href="#" onclick="showRegisterForm()" class="register-link">Hesap Oluştur</a>
+                    <a href="#" id="showRegisterLink" class="register-link">Hesap Oluştur</a>
                 </p>
             </div>
             
             <!-- Kayıt Formu -->
             <div id="registerFormContainer" style="display: none;">
-                <form id="registerForm" onsubmit="handleRegister(event)">
+                <form id="registerForm">
                     <input type="text" id="regUsername" placeholder="Kullanıcı Adı" required minlength="3">
                     <input type="text" id="regFullName" placeholder="Ad Soyad" required>
                     <input type="password" id="regPassword" placeholder="Şifre" required minlength="4">
@@ -40,7 +40,7 @@
                 </form>
                 <p class="login-info">
                     Zaten hesabınız var mı? 
-                    <a href="#" onclick="showLoginForm()" class="register-link">Giriş Yap</a>
+                    <a href="#" id="showLoginLink" class="register-link">Giriş Yap</a>
                 </p>
             </div>
             

@@ -114,9 +114,39 @@ function showLoginForm() {
 
 // Sayfa yüklendiğinde kontrol
 document.addEventListener('DOMContentLoaded', () => {
+    // Giriş formu event listener
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
+    
+    // Kayıt formu event listener
+    const registerForm = document.getElementById('registerForm');
+    if (registerForm) {
+        registerForm.addEventListener('submit', handleRegister);
+    }
+    
+    // Link event listener'ları
+    const showRegisterLink = document.getElementById('showRegisterLink');
+    if (showRegisterLink) {
+        showRegisterLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showRegisterForm();
+        });
+    }
+    
+    const showLoginLink = document.getElementById('showLoginLink');
+    if (showLoginLink) {
+        showLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showLoginForm();
+        });
+    }
+    
     if (Auth.isLoggedIn()) {
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('mainContainer').style.display = 'flex';
+        initApp();
     }
 });
 
