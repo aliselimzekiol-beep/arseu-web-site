@@ -44,6 +44,7 @@
                 <button class="nav-btn active" data-section="shifts">Satış Nöbetleri</button>
                 <button class="nav-btn" data-section="work">Cuma Altı</button>
                 <button class="nav-btn" data-section="ads">Reklamlar</button>
+                <button class="nav-btn" data-section="chat">Mesajlar & AI</button>
                 <button class="nav-btn" data-section="news">Haberler</button>
                 <button class="nav-btn" data-section="projects">AI Projeleri</button>
                 <button class="nav-btn logout-btn" onclick="Auth.logout()">Çıkış Yap</button>
@@ -175,6 +176,37 @@
 
                 <div class="ads-grid" id="adsGrid">
                     <!-- JavaScript ile doldurulacak -->
+                </div>
+            </section>
+
+            <!-- Mesajlar & AI Bölümü -->
+            <section id="chat" class="section">
+                <div class="chat-container">
+                    <!-- Genel Sohbet -->
+                    <div class="chat-box">
+                        <h3>Grup Sohbeti</h3>
+                        <div class="chat-messages" id="groupChat">
+                            <!-- Mesajlar buraya gelecek -->
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" id="groupMessage" placeholder="Mesajınızı yazın...">
+                            <button onclick="sendGroupMessage()">Gönder</button>
+                        </div>
+                    </div>
+
+                    <!-- AI Asistan -->
+                    <div class="chat-box ai-box">
+                        <h3>ARSEU AI Asistan</h3>
+                        <div class="chat-messages ai-messages" id="aiChat">
+                            <div class="message ai-message">
+                                <strong>AI:</strong> Merhaba! Ben ARSEU AI Asistanıyım. Size nasıl yardımcı olabilirim?
+                            </div>
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" id="aiMessage" placeholder="AI'ye soru sorun...">
+                            <button onclick="sendAIMessage()">Sor</button>
+                        </div>
+                    </div>
                 </div>
             </section>
         </main>
