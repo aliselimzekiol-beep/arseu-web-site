@@ -444,11 +444,32 @@ function renderAds() {
         `).join('');
 }
 
+// Görsel yükleme için değişken
+let selectedImageBase64 = null;
+
+// Dosya seçildiğinde
+if (document.getElementById('adImageFile')) {
+    document.getElementById('adImageFile').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            document.getElementById('selectedFileName').textContent = file.name;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                selectedImageBase64 = event.target.result;
+                const preview = document.getElementById('imagePreview');
+                preview.src = selectedImageBase64;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+}
+
 function addAd() {
     const title = document.getElementById('adTitle').value.trim();
     const content = document.getElementById('adContent').value.trim();
     const company = document.getElementById('adCompany').value.trim();
-    const image = document.getElementById('adImage').value.trim();
     const link = document.getElementById('adLink').value.trim();
     const expiry = document.getElementById('adExpiry').value;
     const type = document.getElementById('adType').value;
@@ -463,7 +484,7 @@ function addAd() {
         title,
         content,
         company,
-        image,
+        image: selectedImageBase64,
         link,
         expiry,
         type,
@@ -473,13 +494,18 @@ function addAd() {
     DataStore.ads.push(newAd);
     DataStore.save();
 
+    // Formu temizle
     document.getElementById('adTitle').value = '';
     document.getElementById('adContent').value = '';
     document.getElementById('adCompany').value = '';
-    document.getElementById('adImage').value = '';
     document.getElementById('adLink').value = '';
     document.getElementById('adExpiry').value = '';
     document.getElementById('adType').value = 'sponsor';
+    document.getElementById('adImageFile').value = '';
+    document.getElementById('selectedFileName').textContent = 'Dosya seçilmedi';
+    document.getElementById('imagePreview').style.display = 'none';
+    selectedImageBase64 = null;
+    
     renderAds();
     showToast('Reklam başarıyla eklendi!');
 }

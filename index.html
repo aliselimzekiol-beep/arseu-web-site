@@ -159,7 +159,14 @@
                     <input type="text" id="adTitle" placeholder="Reklam Başlığı" required>
                     <textarea id="adContent" placeholder="Reklam içeriği/açıklaması..." rows="3" required></textarea>
                     <input type="text" id="adCompany" placeholder="Şirket/İlan Sahibi" required>
-                    <input type="url" id="adImage" placeholder="Görsel Linki (opsiyonel)">
+                    <div class="file-input-wrapper">
+                        <label for="adImageFile" class="file-input-label">
+                            📷 Görsel Seç (opsiyonel)
+                        </label>
+                        <input type="file" id="adImageFile" accept="image/*" style="display: none;">
+                        <span id="selectedFileName" class="selected-file-name">Dosya seçilmedi</span>
+                        <img id="imagePreview" class="image-preview" style="display: none;">
+                    </div>
                     <input type="url" id="adLink" placeholder="Website/Link (opsiyonel)">
                     <input type="date" id="adExpiry" placeholder="Bitiş Tarihi (opsiyonel)">
                     <select id="adType">
