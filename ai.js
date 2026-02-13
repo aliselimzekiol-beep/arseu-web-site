@@ -3,6 +3,11 @@ const ARSEUAI = {
     conversationHistory: JSON.parse(localStorage.getItem('arseu_ai_history')) || [],
     
     getUserName() {
+        // Auth kontrolü
+        if (typeof Auth === 'undefined' || !Auth) {
+            console.error('Auth objesi bulunamadı!');
+            return 'Misafir';
+        }
         return Auth.getCurrentUserDisplayName();
     },
     
@@ -24,10 +29,11 @@ const ARSEUAI = {
     },
 
     generateResponse(input) {
-        const lowerInput = input.toLowerCase().trim();
-        const userName = this.getUserName();
-        
-        this.addToHistory('user', input);
+        try {
+            const lowerInput = input.toLowerCase().trim();
+            const userName = this.getUserName();
+            
+            this.addToHistory('user', input);
         
         // Selamlama
         if (lowerInput.match(/^(merhaba|selam|hey|hi|hello)/)) {
@@ -201,6 +207,11 @@ Sorularınızı doğal dilde sorabilirsiniz! 💬`;
         const response = defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
         this.addToHistory('assistant', response);
         return response;
+        
+        } catch (error) {
+            console.error('AI Hatası:', error);
+            return `Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin. (Hata: ${error.message})`;
+        }
     },
     
     // Reklam Oluşturma Fonksiyonu

@@ -31,12 +31,25 @@
             
             <!-- Kayıt Formu -->
             <div id="registerFormContainer" style="display: none;">
+                <h3 style="text-align: center; margin-bottom: 20px; color: #667eea;">📝 Yeni Hesap Oluştur</h3>
                 <form id="registerForm">
-                    <input type="text" id="regUsername" placeholder="Kullanıcı Adı" required minlength="3">
-                    <input type="text" id="regFullName" placeholder="Ad Soyad" required>
-                    <input type="password" id="regPassword" placeholder="Şifre" required minlength="4">
-                    <input type="password" id="regPasswordConfirm" placeholder="Şifre Tekrar" required>
-                    <button type="submit">Hesap Oluştur</button>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 500;">👤 Kullanıcı Adı (giriş için)</label>
+                        <input type="text" id="regUsername" placeholder="ornek: ahmet123" required minlength="3">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 500;">📝 Adınız Soyadınız (AI size böyle hitap edecek)</label>
+                        <input type="text" id="regFullName" placeholder="ornek: Ahmet Yılmaz" required>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 500;">🔒 Şifre</label>
+                        <input type="password" id="regPassword" placeholder="En az 4 karakter" required minlength="4">
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 500;">🔒 Şifre Tekrar</label>
+                        <input type="password" id="regPasswordConfirm" placeholder="Şifrenizi tekrar yazın" required>
+                    </div>
+                    <button type="submit" style="width: 100%;">✅ Hesabımı Oluştur</button>
                 </form>
                 <p class="login-info">
                     Zaten hesabınız var mı? 
@@ -244,7 +257,7 @@
         </footer>
     </div>
 
-    <script src="ai.js"></script>
     <script src="app.js"></script>
+    <script src="ai.js"></script>
 </body>
 </html>
