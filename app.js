@@ -3,11 +3,21 @@
 // ========== Giriş Sistemi ==========
 const Auth = {
     users: JSON.parse(localStorage.getItem('arseu_users')) || [
-        { username: 'arseu', password: '1234', role: 'admin' }
+        { username: 'arseu', password: '1234', fullName: 'ARSEU Admin', role: 'admin' }
     ],
     
     isLoggedIn() {
         return sessionStorage.getItem('arseu_logged_in') === 'true';
+    },
+    
+    getCurrentUser() {
+        const username = sessionStorage.getItem('arseu_user');
+        return this.users.find(u => u.username === username);
+    },
+    
+    getCurrentUserDisplayName() {
+        const user = this.getCurrentUser();
+        return user ? (user.fullName || user.username) : 'Misafir';
     },
     
     login(username, password) {
@@ -21,19 +31,30 @@ const Auth = {
     },
     
     logout() {
-        OnlineTracker.disconnect();
         sessionStorage.removeItem('arseu_logged_in');
         sessionStorage.removeItem('arseu_user');
         window.location.reload();
     },
     
-    addUser(username, password, role = 'user') {
+    register(username, password, fullName) {
         if (this.users.find(u => u.username === username)) {
-            return false;
+            return { success: false, message: 'Bu kullanıcı adı zaten kullanılıyor!' };
         }
-        this.users.push({ username, password, role });
+        if (username.length < 3) {
+            return { success: false, message: 'Kullanıcı adı en az 3 karakter olmalı!' };
+        }
+        if (password.length < 4) {
+            return { success: false, message: 'Şifre en az 4 karakter olmalı!' };
+        }
+        
+        this.users.push({ 
+            username, 
+            password, 
+            fullName: fullName || username,
+            role: 'user' 
+        });
         localStorage.setItem('arseu_users', JSON.stringify(this.users));
-        return true;
+        return { success: true, message: 'Hesap başarıyla oluşturuldu!' };
     }
 };
 
@@ -43,15 +64,52 @@ function handleLogin(e) {
     const password = document.getElementById('password').value;
     
     if (Auth.login(username, password)) {
+        const displayName = Auth.getCurrentUserDisplayName();
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('mainContainer').style.display = 'flex';
         initApp();
-        OnlineTracker.init(username);
-        showToast('Hoş geldiniz, ' + username + '!');
+        showToast('Hoş geldiniz, ' + displayName + '! 👋');
     } else {
         showToast('Kullanıcı adı veya şifre hatalı!', 'error');
         document.getElementById('password').value = '';
     }
+}
+
+function handleRegister(e) {
+    e.preventDefault();
+    const username = document.getElementById('regUsername').value.trim();
+    const fullName = document.getElementById('regFullName').value.trim();
+    const password = document.getElementById('regPassword').value;
+    const passwordConfirm = document.getElementById('regPasswordConfirm').value;
+    
+    if (password !== passwordConfirm) {
+        showToast('Şifreler eşleşmiyor!', 'error');
+        return;
+    }
+    
+    const result = Auth.register(username, password, fullName);
+    
+    if (result.success) {
+        showToast(result.message);
+        // Otomatik giriş yap
+        Auth.login(username, password);
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('mainContainer').style.display = 'flex';
+        initApp();
+        showToast('Hoş geldiniz, ' + fullName + '! 👋');
+    } else {
+        showToast(result.message, 'error');
+    }
+}
+
+function showRegisterForm() {
+    document.getElementById('loginFormContainer').style.display = 'none';
+    document.getElementById('registerFormContainer').style.display = 'block';
+}
+
+function showLoginForm() {
+    document.getElementById('registerFormContainer').style.display = 'none';
+    document.getElementById('loginFormContainer').style.display = 'block';
 }
 
 // Sayfa yüklendiğinde kontrol
@@ -591,7 +649,7 @@ const ChatSystem = {
 function sendGroupMessage() {
     const input = document.getElementById('groupMessage');
     const text = input.value.trim();
-    const user = sessionStorage.getItem('arseu_user') || 'Misafir';
+    const user = Auth.getCurrentUserDisplayName();
 
     if (!text) {
         showToast('Lütfen bir mesaj yazın!', 'error');
@@ -602,71 +660,10 @@ function sendGroupMessage() {
     input.value = '';
 }
 
-// ========== ARSEU AI Asistan ==========
-const ARSEUAI = {
-    // AI yanıtları için basit bir knowledge base
-    knowledge: {
-        'merhaba': 'Merhaba! ARSEU ailesine hoş geldiniz. Bugün size nasıl yardımcı olabilirim?',
-        'nasılsın': 'Harikayım, teşekkür ederim! Sizler için buradayım.',
-        'nöbet': 'Satış nöbetleri haftalık olarak düzenlenir. Her teneffüs için bir kişi görev alır. Nöbet almak için Satış Nöbetleri sekmesine gidebilirsiniz.',
-        'satış': 'Satış nöbetlerimiz Pazartesi-Cuma arası 7 teneffüstür. Her teneffüste 1 kişi görev alır.',
-        'teneffüs': 'Okulumuzda 7 teneffüs vardır: 08:40, 10:00, 11:20, 12:40, 14:00, 15:20, 16:40',
-        'cuma': 'Cuma günleri altı saat ders vardır ve çalışma programı için Cuma Altı sekmesinden teneffüs seçebilirsiniz.',
-        'çalışma': 'Cuma altı çalışma programı için kendi teneffüsünüzü seçebilirsiniz. Her teneffüs bir kişiyle sınırlıdır.',
-        'ai': 'AI Projeleri sekmesinden yapay zeka projelerimizi görebilir ve kendi projenizi sunabilirsiniz.',
-        'yapay zeka': 'AI Projeleri sekmesinden yapay zeka ile geliştirilen projeleri keşfedebilirsiniz.',
-        'proje': 'Yeni bir AI projesi sunmak için AI Projeleri sekmesine gidin. Projelerinizi tüm kulüp üyeleri görebilir.',
-        'haber': 'Haberler sekmesinden kulübümüzün son duyurularını takip edebilirsiniz.',
-        'duyuru': 'Haberler sekmesinden tüm duyurulara ulaşabilirsiniz.',
-        'reklam': 'Reklamlar sekmesinden sponsorlarımızı ve ilanları görebilirsiniz.',
-        'sponsor': 'Reklam panosundan kulübümüzün sponsorlarını görebilirsiniz.',
-        'saat': () => `Şu an saat: ${new Date().toLocaleTimeString('tr-TR')}`,
-        'tarih': () => `Bugün: ${new Date().toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`,
-        'yardım': 'Size şunlar hakkında yardımcı olabilirim: nöbetler, satış, teneffüsler, cuma çalışması, AI projeleri, haberler, reklamlar. Sorularınızı Türkçe yazabilirsiniz.',
-        'help': 'Yardım menüsü: nöbet, satış, teneffüs, cuma, çalışma, ai, proje, haber, duyuru, reklam, sponsor',
-        'teşekkür': 'Rica ederim! Başka bir konuda yardıma ihtiyacınız var mı?',
-        'görüşürüz': 'Görüşürüz! İyi günler dilerim. 👋',
-        'bay': 'Hoşça kalın! Tekrar görüşmek üzere. 👋',
-        'selam': 'Selam! Nasıl yardımcı olabilirim?'
-    },
-
-    // Yanıt üret
-    generateResponse(input) {
-        const lowerInput = input.toLowerCase().trim();
-
-        // Özel selamlama kontrolü
-        if (lowerInput === 'selam' || lowerInput === 'selamün aleyküm') {
-            return 'Aleyküm selam! ARSEU ailesine hoş geldiniz. Size nasıl yardımcı olabilirim?';
-        }
-
-        // Anahtar kelime eşleştirme
-        for (let keyword in this.knowledge) {
-            if (lowerInput.includes(keyword)) {
-                const response = this.knowledge[keyword];
-                // Eğer fonksiyon ise çalıştır
-                if (typeof response === 'function') {
-                    return response();
-                }
-                return response;
-            }
-        }
-
-        // Varsayılan yanıtlar
-        const defaultResponses = [
-            'Bu konuda size yardımcı olmak isterdim ancak tam anlayamadım. "yardım" yazarak neler yapabileceğimi öğrenebilirsiniz.',
-            'Üzgünüm, bu soruyu anlayamadım. Başka bir şekilde sorabilir misiniz?',
-            'Hmm, bu konuda bilgim yetersiz. Size yardımcı olabileceğim başka konular: nöbetler, projeler, haberler...',
-            'Anlayamadım, ama öğrenmeye çalışıyorum! Başka nasıl yardımcı olabilirim?'
-        ];
-
-        return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
-    }
-};
-
 function sendAIMessage() {
     const input = document.getElementById('aiMessage');
     const text = input.value.trim();
-    const user = sessionStorage.getItem('arseu_user') || 'Misafir';
+    const user = Auth.getCurrentUserDisplayName();
 
     if (!text) {
         showToast('Lütfen bir soru yazın!', 'error');
@@ -691,7 +688,7 @@ function sendAIMessage() {
             </div>
         `;
         container.scrollTop = container.scrollHeight;
-    }, 500); // 0.5 saniye gecikme (düşünüyor hissi)
+    }, 500);
 
     input.value = '';
     container.scrollTop = container.scrollHeight;
