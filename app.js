@@ -679,51 +679,88 @@ const ChatSystem = {
 
     save() {
         localStorage.setItem('arseu_chat', JSON.stringify(this.messages));
+        console.log('Chat mesajları kaydedildi, toplam:', this.messages.length);
     },
 
     addMessage(user, text) {
+        console.log('Yeni mesaj ekleniyor:', { user, text });
+        
         this.messages.push({
             user: user,
             text: text,
             timestamp: Date.now()
         });
+        
         // Sadece son 50 mesajı sakla
         if (this.messages.length > 50) {
             this.messages = this.messages.slice(-50);
         }
+        
         this.save();
         this.renderMessages();
     },
 
     renderMessages() {
+        console.log('Chat render ediliyor, mesaj sayısı:', this.messages.length);
+        
         const container = document.getElementById('groupChat');
-        if (!container) return;
+        if (!container) {
+            console.error('groupChat elementi bulunamadı!');
+            return;
+        }
 
-        container.innerHTML = this.messages.map(msg => `
-            <div class="message group-message">
-                <strong>${msg.user}:</strong> ${msg.text}
-                <small style="display: block; color: #888; font-size: 0.75rem; margin-top: 5px;">
-                    ${new Date(msg.timestamp).toLocaleTimeString('tr-TR')}
-                </small>
-            </div>
-        `).join('');
+        if (this.messages.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: #888; padding: 20px;">Henüz mesaj yok. İlk mesajı siz gönderin! 💬</p>';
+            return;
+        }
 
-        // En son mesaja kaydır
-        container.scrollTop = container.scrollHeight;
+        try {
+            container.innerHTML = this.messages.map(msg => `
+                <div class="message group-message" style="margin: 10px 0; padding: 12px; background: #f3e5f5; border-radius: 10px; border-left: 4px solid #9c27b0;">
+                    <strong style="color: #667eea;">${msg.user || 'Misafir'}:</strong> 
+                    <span style="color: #333;">${msg.text || ''}</span>
+                    <small style="display: block; color: #888; font-size: 0.75rem; margin-top: 5px;">
+                        ${msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('tr-TR') : ''}
+                    </small>
+                </div>
+            `).join('');
+
+            // En son mesaja kaydır
+            container.scrollTop = container.scrollHeight;
+            console.log('Chat başarıyla render edildi');
+        } catch (error) {
+            console.error('Chat render hatası:', error);
+            container.innerHTML = '<p style="text-align: center; color: #ff4757; padding: 20px;">Mesajlar yüklenirken hata oluştu!</p>';
+        }
     },
 
     clearOldMessages() {
         // 24 saatten eski mesajları temizle
         const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+        const oldCount = this.messages.length;
         this.messages = this.messages.filter(msg => msg.timestamp > oneDayAgo);
-        this.save();
+        
+        if (this.messages.length < oldCount) {
+            console.log(`${oldCount - this.messages.length} eski mesaj temizlendi`);
+            this.save();
+        }
     }
 };
 
 function sendGroupMessage() {
+    console.log('sendGroupMessage çalıştı');
+    
     const input = document.getElementById('groupMessage');
+    if (!input) {
+        console.error('groupMessage input bulunamadı!');
+        showToast('Mesaj alanı bulunamadı!', 'error');
+        return;
+    }
+    
     const text = input.value.trim();
     const user = Auth.getCurrentUserDisplayName();
+    
+    console.log('Mesaj bilgileri:', { user, text });
 
     if (!text) {
         showToast('Lütfen bir mesaj yazın!', 'error');
@@ -732,6 +769,7 @@ function sendGroupMessage() {
 
     ChatSystem.addMessage(user, text);
     input.value = '';
+    console.log('Mesaj gönderildi');
 }
 
 function sendAIMessage() {
