@@ -734,3 +734,161 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') sendAIMessage();
     });
 });
+
+// ========== VERİ PAYLAŞIM FONKSİYONLARI ==========
+
+// Tüm verileri dışa aktar (Export)
+function exportAllData() {
+    try {
+        const exportData = {
+            version: '1.0',
+            exportDate: new Date().toISOString(),
+            exportedBy: Auth.getCurrentUserDisplayName(),
+            data: {
+                shifts: DataStore.shifts,
+                workSchedule: DataStore.workSchedule,
+                news: DataStore.news,
+                projects: DataStore.projects,
+                ads: DataStore.ads,
+                chat: ChatSystem.messages
+            }
+        };
+        
+        // JSON'a çevir
+        const jsonData = JSON.stringify(exportData, null, 2);
+        
+        // Dosya oluştur ve indir
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `arseu-data-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        showToast('✅ Veriler başarıyla dışa aktarıldı! Dosyayı arkadaşlarınla paylaşabilirsin.');
+    } catch (error) {
+        console.error('Export hatası:', error);
+        showToast('❌ Dışa aktarma başarısız: ' + error.message, 'error');
+    }
+}
+
+// JSON dosyasından içe aktar (Import)
+function importAllData(input) {
+    try {
+        const file = input.files[0];
+        if (!file) {
+            showToast('❌ Lütfen bir dosya seçin!', 'error');
+            return;
+        }
+        
+        if (!file.name.endsWith('.json')) {
+            showToast('❌ Lütfen geçerli bir JSON dosyası seçin!', 'error');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                
+                // Veri yapısını kontrol et
+                if (!importedData.data) {
+                    showToast('❌ Geçersiz dosya formatı!', 'error');
+                    return;
+                }
+                
+                // Onay al
+                if (!confirm(`📥 ${importedData.exportedBy || 'Bilinmeyen'} tarafından dışa aktarılmış verileri içe aktarmak istiyor musunuz?\n\nBu işlem mevcut verilerinizi koruyarak yeni veriler ekleyecektir.`)) {
+                    return;
+                }
+                
+                // Verileri birleştir
+                let addedCount = 0;
+                
+                // Haberleri ekle
+                if (importedData.data.news && Array.isArray(importedData.data.news)) {
+                    importedData.data.news.forEach(newsItem => {
+                        // Aynı haber var mı kontrol et (basit kontrol)
+                        const exists = DataStore.news.some(n => 
+                            n.title === newsItem.title && n.date === newsItem.date
+                        );
+                        if (!exists) {
+                            DataStore.news.push(newsItem);
+                            addedCount++;
+                        }
+                    });
+                }
+                
+                // Reklamları ekle
+                if (importedData.data.ads && Array.isArray(importedData.data.ads)) {
+                    importedData.data.ads.forEach(adItem => {
+                        const exists = DataStore.ads.some(a => 
+                            a.title === adItem.title && a.date === adItem.date
+                        );
+                        if (!exists) {
+                            DataStore.ads.push(adItem);
+                            addedCount++;
+                        }
+                    });
+                }
+                
+                // Projeleri ekle
+                if (importedData.data.projects && Array.isArray(importedData.data.projects)) {
+                    importedData.data.projects.forEach(projectItem => {
+                        const exists = DataStore.projects.some(p => 
+                            p.title === projectItem.title && p.date === projectItem.date
+                        );
+                        if (!exists) {
+                            DataStore.projects.push(projectItem);
+                            addedCount++;
+                        }
+                    });
+                }
+                
+                // Nöbetleri birleştir
+                if (importedData.data.shifts) {
+                    Object.assign(DataStore.shifts, importedData.data.shifts);
+                    addedCount++;
+                }
+                
+                // Çalışma programını birleştir
+                if (importedData.data.workSchedule) {
+                    Object.assign(DataStore.workSchedule, importedData.data.workSchedule);
+                    addedCount++;
+                }
+                
+                // Kaydet ve güncelle
+                DataStore.save();
+                
+                // Ekranları yenile
+                renderShifts();
+                renderWorkSchedule();
+                renderNews();
+                renderProjects();
+                renderAds();
+                
+                showToast(`✅ İçe aktarma tamamlandı! ${addedCount} yeni kayıt eklendi.`);
+                
+                // Input'u temizle (tekrar aynı dosyayı seçebilmek için)
+                input.value = '';
+                
+            } catch (parseError) {
+                console.error('JSON parse hatası:', parseError);
+                showToast('❌ Dosya okunurken hata oluştu! Geçerli bir JSON dosyası olduğundan emin olun.', 'error');
+            }
+        };
+        
+        reader.onerror = function() {
+            showToast('❌ Dosya okunurken hata oluştu!', 'error');
+        };
+        
+        reader.readAsText(file);
+        
+    } catch (error) {
+        console.error('Import hatası:', error);
+        showToast('❌ İçe aktarma başarısız: ' + error.message, 'error');
+    }
+}

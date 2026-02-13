@@ -83,6 +83,18 @@
                 <button class="nav-btn" data-section="projects">AI Projeleri</button>
                 <button class="nav-btn logout-btn" onclick="Auth.logout()">Çıkış Yap</button>
             </nav>
+            
+            <!-- Veri Paylaşım Butonları -->
+            <div class="data-share-bar">
+                <span class="data-share-label">📤 Veri Paylaşımı:</span>
+                <button class="data-share-btn export-btn" onclick="exportAllData()" title="Tüm verileri dışa aktar">
+                    💾 Dışa Aktar (JSON)
+                </button>
+                <button class="data-share-btn import-btn" onclick="document.getElementById('importFile').click()" title="JSON dosyası içe aktar">
+                    📥 İçe Aktar (JSON)
+                </button>
+                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importAllData(this)">
+            </div>
         </header>
 
         <main>
