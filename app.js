@@ -372,50 +372,94 @@ function selectWorkShift() {
 
 // ========== Haberler ==========
 function renderNews() {
+    console.log('renderNews çalıştı, haber sayısı:', DataStore.news.length);
+    
     const container = document.getElementById('newsList');
+    if (!container) {
+        console.error('newsList elementi bulunamadı!');
+        return;
+    }
     
     if (DataStore.news.length === 0) {
         container.innerHTML = '<p style="text-align: center; color: #888; padding: 40px;">Henüz haber bulunmuyor.</p>';
         return;
     }
     
-    container.innerHTML = DataStore.news
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .map(news => `
-            <div class="news-item">
-                <h4>${news.title}</h4>
-                <p>${news.content}</p>
-                <div class="news-meta">
-                    <span class="news-author">${news.author}</span>
-                    <span class="news-date">${new Date(news.date).toLocaleDateString('tr-TR')}</span>
+    try {
+        container.innerHTML = DataStore.news
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .map(news => `
+                <div class="news-item">
+                    <h4>${news.title || 'Başlıksız'}</h4>
+                    <p>${news.content || 'İçerik yok'}</p>
+                    <div class="news-meta">
+                        <span class="news-author">${news.author || 'Bilinmeyen'}</span>
+                        <span class="news-date">${news.date ? new Date(news.date).toLocaleDateString('tr-TR') : 'Tarih yok'}</span>
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `).join('');
+        console.log('Haberler başarıyla render edildi');
+    } catch (error) {
+        console.error('Render hatası:', error);
+        container.innerHTML = '<p style="text-align: center; color: #ff4757; padding: 40px;">Haberler yüklenirken hata oluştu!</p>';
+    }
 }
 
 function addNews() {
-    const title = document.getElementById('newsTitle').value.trim();
-    const content = document.getElementById('newsContent').value.trim();
-    const author = document.getElementById('newsAuthor').value.trim();
+    console.log('addNews fonksiyonu çalıştı');
+    
+    const titleInput = document.getElementById('newsTitle');
+    const contentInput = document.getElementById('newsContent');
+    const authorInput = document.getElementById('newsAuthor');
+    
+    if (!titleInput || !contentInput || !authorInput) {
+        console.error('Form elementleri bulunamadı!');
+        showToast('Form hatası! Sayfayı yenileyin.', 'error');
+        return;
+    }
+    
+    const title = titleInput.value.trim();
+    const content = contentInput.value.trim();
+    const author = authorInput.value.trim();
+    
+    console.log('Haber bilgileri:', { title, content, author });
 
     if (!title || !content || !author) {
         showToast('Lütfen tüm alanları doldurun!', 'error');
         return;
     }
 
-    DataStore.news.push({
+    // Yeni haber objesi
+    const newNews = {
         title,
         content,
         author,
         date: new Date().toISOString()
-    });
-    DataStore.save();
+    };
+    
+    console.log('Yeni haber:', newNews);
 
-    document.getElementById('newsTitle').value = '';
-    document.getElementById('newsContent').value = '';
-    document.getElementById('newsAuthor').value = '';
+    // DataStore'a ekle
+    DataStore.news.push(newNews);
+    DataStore.save();
+    
+    console.log('Toplam haber sayısı:', DataStore.news.length);
+
+    // Formu temizle
+    titleInput.value = '';
+    contentInput.value = '';
+    authorInput.value = '';
+    
+    // Haberleri render et
     renderNews();
-    showToast('Haber başarıyla yayınlandı!');
+    
+    // Haberler listesine scroll yap
+    const newsList = document.getElementById('newsList');
+    if (newsList) {
+        newsList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    
+    showToast('✅ Haber başarıyla yayınlandı!');
 }
 
 // ========== AI Projeleri ==========
