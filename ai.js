@@ -96,8 +96,28 @@ const ARSEUAI = {
         }
         
         // Yardım
-        if (lowerInput.match(/(yardım|help|nasıl|ne yapabilirsin)/)) {
-            const response = `🆘 **ARSEU AI Asistan - Yardım Menüsü**\n\n**Konuşabileceğim konular:**\n\n📅 Nöbetler ve satış sistemleri\n📚 Cuma altı çalışma programı\n🤖 AI projeleri ve yapay zeka\n📰 Haberler ve duyurular\n📢 Reklamlar ve sponsorluklar\n💬 Mesajlaşma ve sohbet\n⏰ Saat ve tarih bilgisi\n👤 Hesap yönetimi\n\nSorularınızı doğal dilde sorabilirsiniz! 💬`;
+        if (lowerInput.match(/(yardım|help|nasıl|ne yapabilirsin|yeteneklerin)/)) {
+            const response = `🆘 **ARSEU AI Asistan - Yardım Menüsü**
+
+**Konuşabileceğim konular:**
+
+📅 Nöbetler ve satış sistemleri
+📚 Cuma altı çalışma programı
+🤖 AI projeleri ve yapay zeka
+📰 Haberler ve duyurular
+📢 Reklamlar ve sponsorluklar
+💬 Mesajlaşma ve sohbet
+⏰ Saat ve tarih bilgisi
+👤 Hesap yönetimi
+
+**Özel Komutlar:**
+• "merhaba" - Selamlaşma
+• "nasılsın" - Hal hatır sorma
+• "teşekkür" - Teşekkür etme
+• "görüşürüz" - Vedalaşma
+• **"reklam oluştur" - AI otomatik reklam yaratır**
+
+Sorularınızı doğal dilde sorabilirsiniz! 💬`;
             this.addToHistory('assistant', response);
             return response;
         }
@@ -159,9 +179,14 @@ const ARSEUAI = {
         
         // AI Hakkında
         if (lowerInput.match(/(sen nesin|sen kimsin|ai mısın|bot musun)/)) {
-            const response = `🤖 **Ben Kimim?**\n\nBen ARSEU AI Asistanıyım!\n\n**Özelliklerim:**\n• 💬 Doğal dil işleme\n• 🧠 Bağlamsal hafıza\n• 🎯 Kişiselleştirilmiş yanıtlar\n• ⚡ Anlık yanıt üretme\n• 📚 ARSEU bilgi tabanı erişimi\n\nSizin için buradayım! Size nasıl yardımcı olabilirim? ✨`;
+            const response = `🤖 **Ben Kimim?**\n\nBen ARSEU AI Asistanıyım!\n\n**Özelliklerim:**\n• 💬 Doğal dil işleme\n• 🧠 Bağlamsal hafıza\n• 🎯 Kişiselleştirilmiş yanıtlar\n• ⚡ Anlık yanıt üretme\n• 📚 ARSEU bilgi tabanı erişimi\n• 📢 Otomatik reklam oluşturma\n\nSizin için buradayım! Size nasıl yardımcı olabilirim? ✨`;
             this.addToHistory('assistant', response);
             return response;
+        }
+        
+        // Reklam Oluşturma
+        if (lowerInput.match(/(reklam oluştur|reklam yap|yeni reklam|ilan oluştur)/)) {
+            return this.createAdvertisement(userName);
         }
         
         // Varsayılan yanıt
@@ -176,6 +201,98 @@ const ARSEUAI = {
         const response = defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
         this.addToHistory('assistant', response);
         return response;
+    },
+    
+    // Reklam Oluşturma Fonksiyonu
+    createAdvertisement(userName) {
+        const ads = [
+            {
+                title: "🎓 ARSEU Eğitim Programı",
+                content: "Yapay zeka ve teknoloji eğitimlerimize katılın! Uzman eğitmenlerle geleceği şekillendirin.",
+                company: "ARSEU Akademi",
+                type: "duyuru"
+            },
+            {
+                title: "☕ Kahve Molası",
+                content: "Tenefüslerde taze kahve ve atıştırmalıklar! %20 indirimli fiyatlarla sizleri bekliyoruz.",
+                company: "ARSEU Kafeterya",
+                type: "sponsor"
+            },
+            {
+                title: "📚 Ders Notları",
+                content: "Tüm derslerin özet notları ve çalışma materyalleri ARSEU platformunda! Ücretsiz erişim.",
+                company: "ARSEU Eğitim",
+                type: "ilan"
+            },
+            {
+                title: "🚀 Kariyer Günleri",
+                content: "Sektörün önde gelen firmaları ile tanışma fırsatı! CV hazırlama workshopları ve mülakat simülasyonları.",
+                company: "ARSEU Kariyer",
+                type: "etkinlik"
+            },
+            {
+                title: "💻 Laptop Kampanyası",
+                content: "Öğrencilere özel laptop indirimleri! Teknoloji partnerlerimizden %15 ek indirim.",
+                company: "TechStore",
+                type: "sponsor"
+            },
+            {
+                title: "🎯 Proje Yarışması",
+                content: "En iyi AI projesi ödülü: 5000 TL! Başvurular başladı. Son tarih: 30 Haziran.",
+                company: "ARSEU Yönetim",
+                type: "etkinlik"
+            },
+            {
+                title: "📱 Mobil Uygulama",
+                content: "ARSEU artık cebinizde! Mobil uygulamamızı indirin, tüm özelliklere anında erişin.",
+                company: "ARSEU Tech",
+                type: "duyuru"
+            },
+            {
+                title: "🤝 Mentorluk Programı",
+                content: "Deneyimli üyelerden birebir mentorluk! Kariyerinizi hızlandırın.",
+                company: "ARSEU Gelişim",
+                type: "ilan"
+            }
+        ];
+        
+        // Rastgele bir reklam seç
+        const selectedAd = ads[Math.floor(Math.random() * ads.length)];
+        
+        // Reklam objesini oluştur
+        const newAd = {
+            id: 'ad_' + Date.now(),
+            title: selectedAd.title,
+            content: selectedAd.content,
+            company: selectedAd.company,
+            image: null,
+            link: null,
+            expiry: null,
+            type: selectedAd.type,
+            date: new Date().toISOString(),
+            createdBy: userName,
+            isAutoGenerated: true
+        };
+        
+        // DataStore'a ekle
+        if (typeof DataStore !== 'undefined') {
+            DataStore.ads.push(newAd);
+            DataStore.save();
+            
+            // Eğer renderAds fonksiyonu varsa çağır
+            if (typeof renderAds === 'function') {
+                renderAds();
+            }
+            
+            const response = `📢 **Reklam Oluşturuldu!**\n\n**${selectedAd.title}**\n\n${selectedAd.content}\n\n🏢 **Firma:** ${selectedAd.company}\n🏷️ **Tür:** ${selectedAd.type.toUpperCase()}\n👤 **Oluşturan:** ${userName} (AI tarafından otomatik)\n\n✅ Reklam başarıyla yayınlandı! Reklamlar sekmesinden görüntüleyebilirsiniz.`;
+            
+            this.addToHistory('assistant', response);
+            return response;
+        } else {
+            const response = `❌ Üzgünüm ${userName}, şu anda reklam oluşturma sistemi aktif değil. Lütfen daha sonra tekrar deneyin.`;
+            this.addToHistory('assistant', response);
+            return response;
+        }
     },
     
     clearHistory() {
